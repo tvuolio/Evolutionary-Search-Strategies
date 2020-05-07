@@ -2,13 +2,13 @@ import numpy as np
 import random as rand
 import matplotlib.pyplot as plt
 import math
-
+from datetime import datetime
 '''
     @Class Real-Coded Genetic Algorithm for minimizing an objective function
     @return - Minima of the function
 '''   
 class RCGA:
-    def __init__(self, n_pop=100, max_gen=100, selection_method="TS", tournament_size=2, p_c=0.9, p_m=0.01, crossOver_method="2x", mutation_method ="MPT", initial_guess=0, UB=1, LB=-1):
+    def __init__(self, n_pop=100, max_gen=100, selection_method="TS", tournament_size=2, p_c=0.9, p_m=0.01, crossOver_method="2x", mutation_method ="MPT", initial_guess=0, UB=1, LB=-1, fitness_scaling = 0, display=True):
         self.n_pop = n_pop
         self.gen = 0
         self.max_gen = max_gen
@@ -31,6 +31,9 @@ class RCGA:
         self.min_value = 0
         self.UB = UB
         self.LB = LB
+        self.fitness_scaling = fitness_scaling
+        self.display=display
+        self.max_fit = 0
 
     '''
     This method is where the search is carried out by calling the RCGA methods
@@ -46,24 +49,31 @@ class RCGA:
         while self.gen <= self.max_gen:
                         
             for i in range(0, self.n_pop):
-                yhat = RCGA.predict(self, A_pop[:,i], fun)
-                A_fit[i] = RCGA.evaluateFitness(self, yhat)
+                f_val = RCGA.predict(self, A_pop[:,i], fun)
+                A_fit[i] = RCGA.evaluateFitness(self, f_val, A_pop[:,i])
+                RCGA.elitism(self, A_fit, A_pop)
 
             A_fit_s = RCGA.scaleFitness(self, A_fit)  
             selected = RCGA.selection(self, A_fit_s)
             A_pop = RCGA.setPop(self, A_pop, selected)
             A_pop = RCGA.crossOver(self, A_pop, A_fit)
-            RCGA.elitism(self, A_fit, A_pop)
             
-            self.fitness_gen.append(1/max(A_fit))
+            
+            self.fitness_gen.append(max(A_fit))
             self.param_iter.append(self.gbest_param)
-            print("Function value:", 1/max(A_fit) )
+            self.max_fit = max(A_fit)
+
+            RCGA.displayFvalue(self, fun)
             RCGA.setMutationProbability(self)
 
-            
             self.gen += 1
 
-        self.min_value =  1 /max(A_fit) 
+        
+        self.min_value = fun.eval(self.gbest_param)
+
+    def displayFvalue(self, fun):
+        if self.display:
+            print("Function value:", fun.eval(self.gbest_param), "Maximum fitness:", self.max_fit )
 
     '''
     The population is initialized in this method
@@ -74,7 +84,7 @@ class RCGA:
         A = zeros(self.n_digits, self.n_pop)
         a = self.LB
         b = self.UB
-
+        
         for i in range(0,self.n_digits):
             for j in range(0,self.n_pop):
                 A[i][j] = (b - a) * rand.random() + a          
@@ -131,8 +141,9 @@ class RCGA:
     Evaluates the fitness based on the function value
     @return - Fitness of an individual
     ''' 
-    def evaluateFitness(self, yhat):
-        return 1 / yhat
+    def evaluateFitness(self, yhat, X):
+
+        return 1 / (yhat + self.fitness_scaling) 
 
     '''
     Interface for CrossOver. Implements the Arithmetic CrossOver
@@ -226,7 +237,7 @@ class RCGA:
         sigma = 0.5
         F = np.random.normal(mu, sigma)
 
-        return x_s + F * (x_t - x_l) + F*(self.gbest_param - x_s)
+        return x_s + F * (x_t - x_l) + F * (self.gbest_param - x_s)
 
     '''
     Set mutation probability according to the generation and number of digits
@@ -286,9 +297,10 @@ Currently uses the Rastrigin function for testing purposes
 '''
 class testFunction:
 
-    def __init__(self, name, N=20):
+    def __init__(self, name="Rastrigin", N=20):
         self.N = N
         self.name = name
+
 
     def eval(self, X):
 
@@ -299,24 +311,37 @@ class testFunction:
                 f_sum = f_sum + ( X[i]**2 - 10*math.cos(2*3.1459*X[i]) )
             return 10*self.N + f_sum
 
+        else:
+            print("Test function not found.")
+      
+
     def getDimension(self):
         return self.N
+    
+    def setDimension(self, dim):
+        self.N = dim
 
 
 def main():
+
     ### Initialize the solver###
     ### RCGA = Real-Coded Genetic Algorithm
-    solver = RCGA(n_pop=200, max_gen = 500, p_c=0.9, p_m=0.1, tournament_size=2, crossOver_method="2x", mutation_method="MPT", UB=5.12, LB=-5.12) 
-
     ###Create a test function object###
-    f = testFunction("Rastrigin", N=40) 
+    f = testFunction("Rastrigin", N=20) 
     
+    solver = RCGA(n_pop=200, max_gen = 500, p_c=0.90, p_m=0.1, tournament_size=10, crossOver_method="2x", mutation_method="MPT", UB=5.12, LB=-5.12, fitness_scaling = 0, display=False) 
+    
+    ###Get current time###
+    t0 = datetime.now()
     ###Search the minima###
     solver.search(f)
+    t = datetime.now()
 
     ###Display results###
     print("\n\nX = ", solver.gbest_param)
-    print("\n\nf(X):", solver.min_value, "\n\n")
+    print("\n\nf(X):", solver.min_value, "\n")
+    print("Execution time:", round((t-t0).total_seconds(),2), "seconds for {} parameters.\n\n".format(len(solver.gbest_param)))
+
     
     ###Plot results####
     p = plt.plot(solver.fitness_gen)
