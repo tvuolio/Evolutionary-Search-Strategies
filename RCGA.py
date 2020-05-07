@@ -309,8 +309,8 @@ def main():
     solver = RCGA(n_pop=200, max_gen = 500, p_c=0.9, p_m=0.1, tournament_size=2, crossOver_method="2x", mutation_method="MPT", UB=5.12, LB=-5.12) 
 
     ###Create a test function object###
-    f = testFunction("Rastrigin", N=60) 
-
+    f = testFunction("Rastrigin", N=40) 
+    
     ###Search the minima###
     solver.search(f)
 
@@ -320,8 +320,8 @@ def main():
     
     ###Plot results####
     p = plt.plot(solver.fitness_gen)
-    plt.xlabel('f(x)')
-    plt.ylabel('iteration')
+    plt.ylabel('f(x)')
+    plt.xlabel('iteration')
     plt.title('convergence graph')
     plt.show()
 
