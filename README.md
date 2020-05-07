@@ -1,5 +1,5 @@
 # Evolutionary-Search-Strategies
-Evolutionary search based optimization strategies for function minimization. Can be used for continuous function optimization. Well suited for teaching, benchmarking etc. An example to call the solvers is given in the main() in RCGA.py. 
+Evolutionary search based optimization strategies for function minimization. Can be currently used for non-constrained continuous function optimization. Well-suited for teaching, benchmarking etc. An example to call the solvers is given in the main() in RCGA.py. 
 
 1. Available solvers
 
