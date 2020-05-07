@@ -4,7 +4,8 @@ Evolutionary search based optimization strategies for function minimization. Can
 1. Available solvers
 
   Currently, the package contains the following solvers:
-    1. RCGA
+  
+    1. RCGA (Real-coded genetic algorithm)
     
 2. Descriptions of the strategies
  
